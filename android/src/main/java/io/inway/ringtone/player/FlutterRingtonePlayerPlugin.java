@@ -1,9 +1,12 @@
 package io.inway.ringtone.player;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -36,8 +39,10 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
             final String methodName = call.method;
 
             if (methodName.equals("play")) {
-                final RingtoneMeta meta = createRingtoneMeta(call);
-                startRingtone(meta);
+                if (isServiceRunning()) {
+                    final RingtoneMeta meta = createRingtoneMeta(call);
+                    startRingtone(meta);
+                }
                 result.success(null);
             } else if (methodName.equals("stop")) {
                 stopRingtone();
@@ -99,5 +104,15 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
 
     private Intent createServiceIntent() {
         return new Intent(context, FlutterRingtonePlayerService.class);
+    }
+
+    private boolean isServiceRunning() {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (FlutterRingtonePlayerService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
