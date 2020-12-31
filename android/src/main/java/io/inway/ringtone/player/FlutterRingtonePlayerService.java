@@ -80,6 +80,8 @@ public class FlutterRingtonePlayerService extends Service {
                 .setContentText(notificationMeta.getContentText())
                 .setSubText(notificationMeta.getSubText())
                 .setContentIntent(pendingIntent)
+                .setVibrate(new long[]{0L})
+                .setSound(null)
                 .build();
 
         startForeground(1, notification);
@@ -100,7 +102,7 @@ public class FlutterRingtonePlayerService extends Service {
     private void createNotificationChannel() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             final NotificationChannel serviceChannel = new NotificationChannel(CHANNEL_ID, "Foreground service channel",
-                    NotificationManager.IMPORTANCE_DEFAULT);
+                    NotificationManager.IMPORTANCE_NONE);
 
             serviceChannel.setLightColor(Color.RED);
             serviceChannel.enableLights(true);
