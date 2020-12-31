@@ -39,7 +39,7 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
             final String methodName = call.method;
 
             if (methodName.equals("play")) {
-                if (isServiceRunning()) {
+                if (!isServiceRunning()) {
                     final RingtoneMeta meta = createRingtoneMeta(call);
                     startRingtone(meta);
                 }
