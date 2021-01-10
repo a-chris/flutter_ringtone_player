@@ -9,6 +9,8 @@ import android.media.RingtoneManager;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -22,43 +24,63 @@ import java.util.Map;
 /**
  * FlutterRingtonePlayerPlugin
  */
-public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
-    private final Context context;
-
-    public FlutterRingtonePlayerPlugin(Context context) {
-        this.context = context;
-    }
+public class FlutterRingtonePlayerPlugin implements FlutterPlugin, MethodCallHandler {
+    private MethodChannel channel;
+    private Context context;
 
     /**
-     * Plugin registration.
+     * Old plugin registration.
      */
+    @SuppressWarnings("deprecation")
     public static void registerWith(Registrar registrar) {
-        final MethodChannel channel = new MethodChannel(registrar.messenger(), "flutter_ringtone_player");
-        channel.setMethodCallHandler(new FlutterRingtonePlayerPlugin(registrar.context()));
+        final FlutterRingtonePlayerPlugin plugin = new FlutterRingtonePlayerPlugin();
+        plugin.onAttachedToEngine(registrar.context(), registrar.messenger());
+
     }
 
     @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+        onAttachedToEngine(binding.getApplicationContext(), binding.getBinaryMessenger());
+    }
+
+    private void onAttachedToEngine(Context applicationContext, BinaryMessenger messenger) {
+        context = applicationContext;
+        channel = new MethodChannel(messenger, "flutter_ringtone_player");
+        channel.setMethodCallHandler(this);
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        context = null;
+        channel.setMethodCallHandler(null);
+        channel = null;
+    }
+
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         try {
             final String methodName = call.method;
 
-            if (methodName.equals("play")) {
-                if (!isServiceRunning()) {
-                    final RingtoneMeta meta = createRingtoneMeta(call);
-                    startRingtone(meta);
-                }
-                result.success(null);
-            } else if (methodName.equals("stop")) {
-                stopRingtone();
-                result.success(null);
-            } else if (methodName.equals("getAlarmRingtonesList")) {
-                ArrayList<AlarmRingtone> ringtones = getAlarmRingtonesList();
+            switch (methodName) {
+                case "play":
+                    if (!isServiceRunning()) {
+                        final RingtoneMeta meta = createRingtoneMeta(call);
+                        startRingtone(meta);
+                    }
+                    result.success(null);
+                    break;
+                case "stop":
+                    stopRingtone();
+                    result.success(null);
+                    break;
+                case "getAlarmRingtonesList":
+                    ArrayList<AlarmRingtone> ringtones = getAlarmRingtonesList();
 
-                List<Object> ringtonesList = new ArrayList<>();
-                for (AlarmRingtone ringtone : ringtones) {
-                    ringtonesList.add(ringtone.toMap());
-                }
-                result.success(ringtonesList);
+                    List<Object> ringtonesList = new ArrayList<>();
+                    for (AlarmRingtone ringtone : ringtones) {
+                        ringtonesList.add(ringtone.toMap());
+                    }
+                    result.success(ringtonesList);
+                    break;
             }
         } catch (Exception e) {
             result.error("Exception", e.getMessage(), null);
