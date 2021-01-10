@@ -7,6 +7,7 @@ public class RingtoneMeta implements Serializable {
     private Float volume;
     private Boolean looping;
     private Boolean asAlarm;
+    private String ringtoneUri;
     private AlarmNotificationMeta alarmNotificationMeta;
 
     public void setKind(int kind) {
@@ -47,5 +48,13 @@ public class RingtoneMeta implements Serializable {
 
     public void setAlarmNotificationMeta(AlarmNotificationMeta alarmNotificationMeta) {
         this.alarmNotificationMeta = alarmNotificationMeta;
+    }
+
+    public String getRingtoneUri() {
+        return ringtoneUri;
+    }
+
+    public void setRingtoneUri(String ringtoneUri) {
+        this.ringtoneUri = ringtoneUri;
     }
 }

@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_ringtone_player/alarm_notification_meta.dart';
+import 'package:flutter_ringtone_player/alarm_ringtone.dart';
 
 import 'android_sounds.dart';
 import 'ios_sounds.dart';
@@ -19,8 +20,7 @@ export 'ios_sounds.dart';
 /// On Android it uses system default sounds for each ringtone type. On iOS it
 /// uses some hardcoded values for each type.
 class FlutterRingtonePlayer {
-  static const MethodChannel _channel =
-      const MethodChannel('flutter_ringtone_player');
+  static const MethodChannel _channel = const MethodChannel('flutter_ringtone_player');
 
   /// This is generic method allowing you to specify individual sounds
   /// you wish to be played for each platform
@@ -40,6 +40,7 @@ class FlutterRingtonePlayer {
       double volume,
       bool looping,
       bool asAlarm,
+      String ringtoneUri,
       AlarmNotificationMeta alarmNotificationMeta}) async {
     try {
       var args = <String, dynamic>{
@@ -49,27 +50,33 @@ class FlutterRingtonePlayer {
       if (looping != null) args['looping'] = looping;
       if (volume != null) args['volume'] = volume;
       if (asAlarm != null) args['asAlarm'] = asAlarm;
-      if (alarmNotificationMeta != null) args['alarmNotificationMeta'] = alarmNotificationMeta.toMap();
+      if (ringtoneUri != null) args['ringtoneUri'] = ringtoneUri;
+      if (alarmNotificationMeta != null)
+        args['alarmNotificationMeta'] = alarmNotificationMeta.toMap();
 
       _channel.invokeMethod('play', args);
     } on PlatformException {}
   }
 
-  /// Play default alarm sound (looping on Android)
+  /// Play default alarm sound if ringtoneUri is not specified (looping on Android)
   static Future<void> playAlarm(
-          {double volume, bool looping = true, bool asAlarm = true, AlarmNotificationMeta alarmNotificationMeta}) async =>
+          {double volume,
+          bool looping = true,
+          bool asAlarm = true,
+          String ringtoneUri,
+          AlarmNotificationMeta alarmNotificationMeta}) async =>
       play(
-          android: AndroidSounds.alarm,
-          ios: IosSounds.alarm,
-          volume: volume,
-          looping: looping,
-          asAlarm: asAlarm,
-          alarmNotificationMeta: alarmNotificationMeta,
+        android: AndroidSounds.alarm,
+        ios: IosSounds.alarm,
+        volume: volume,
+        looping: looping,
+        asAlarm: asAlarm,
+        ringtoneUri: ringtoneUri,
+        alarmNotificationMeta: alarmNotificationMeta,
       );
 
   /// Play default notification sound
-  static Future<void> playNotification(
-          {double volume, bool looping, bool asAlarm = false}) async =>
+  static Future<void> playNotification({double volume, bool looping, bool asAlarm = false}) async =>
       play(
           android: AndroidSounds.notification,
           ios: IosSounds.triTone,
@@ -93,5 +100,16 @@ class FlutterRingtonePlayer {
     try {
       _channel.invokeMethod('stop');
     } on PlatformException {}
+  }
+
+  /// Get the list of alarm ringtones available on the device.
+  /// Only Android platform is supported.
+  static Future<List<AlarmRingtone>> getAlarmRingtonesList() async {
+    try {
+      final List<dynamic> ringtones = await _channel.invokeMethod('getAlarmRingtonesList');
+      return ringtones.map((e) => AlarmRingtone.fromMap(Map<String, dynamic>.from(e))).toList();
+    } on PlatformException catch (e) {
+      throw 'Cannot load alarm ringtones: ${e.message}';
+    }
   }
 }

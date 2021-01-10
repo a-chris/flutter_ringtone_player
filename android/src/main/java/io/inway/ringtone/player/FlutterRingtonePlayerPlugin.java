@@ -3,6 +3,8 @@ package io.inway.ringtone.player;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.media.RingtoneManager;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -13,6 +15,8 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,6 +51,14 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
             } else if (methodName.equals("stop")) {
                 stopRingtone();
                 result.success(null);
+            } else if (methodName.equals("getAlarmRingtonesList")) {
+                ArrayList<AlarmRingtone> ringtones = getAlarmRingtonesList();
+
+                List<Object> ringtonesList = new ArrayList<>();
+                for (AlarmRingtone ringtone : ringtones) {
+                    ringtonesList.add(ringtone.toMap());
+                }
+                result.success(ringtonesList);
             }
         } catch (Exception e) {
             result.error("Exception", e.getMessage(), null);
@@ -62,6 +74,7 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
         meta.setKind(getMethodCallArgument(call, "android", Integer.class));
         meta.setLooping(getMethodCallArgument(call, "looping", Boolean.class));
         meta.setAsAlarm(getMethodCallArgument(call, "asAlarm", Boolean.class));
+        meta.setRingtoneUri(getMethodCallArgument(call, "ringtoneUri", String.class));
         final Double volume = getMethodCallArgument(call, "volume", Double.class);
         if (volume != null) {
             meta.setVolume(volume.floatValue());
@@ -80,6 +93,23 @@ public class FlutterRingtonePlayerPlugin implements MethodCallHandler {
         }
 
         return meta;
+    }
+
+    private ArrayList<AlarmRingtone> getAlarmRingtonesList() {
+        RingtoneManager manager = new RingtoneManager(context);
+        manager.setType(RingtoneManager.TYPE_ALARM);
+        Cursor cursor = manager.getCursor();
+
+        ArrayList<AlarmRingtone> ringtones = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            String name = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX);
+            String id = cursor.getString(RingtoneManager.ID_COLUMN_INDEX);
+            String uri = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
+
+            ringtones.add(new AlarmRingtone(name, uri + "/" + id));
+        }
+
+        return ringtones;
     }
 
     private void startRingtone(RingtoneMeta meta) {

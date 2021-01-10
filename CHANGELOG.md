@@ -1,3 +1,11 @@
+
+## a-chris fork
+
+* Add getAlarmRingtonesList function only for Android
+* Allow playing custom ringtone on Android by passing the ringtone Uri
+* Turn off vibration and sound for the notification created by the Service
+* The alarm won't play again while it is already playing
+
 ## 2.0.0
 
 Breaking changes:

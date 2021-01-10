@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
@@ -127,7 +128,12 @@ public class FlutterRingtonePlayerService extends Service {
     }
 
     private Ringtone getConfiguredRingtone(RingtoneMeta meta) {
-        final Uri uri = getRingtoneUri(meta.getKind());
+        Uri uri;
+        if (meta.getRingtoneUri() != null) {
+            uri = Uri.parse(meta.getRingtoneUri());
+        } else {
+            uri = getRingtoneUri(meta.getKind());
+        }
         final Ringtone ringtone = RingtoneManager.getRingtone(this, uri);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
