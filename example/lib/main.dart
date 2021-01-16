@@ -23,7 +23,56 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
+  @override
+  _HomeState createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  List<AlarmRingtone> _ringtones;
+  AlarmRingtone _defaultRingtone;
+
+  @override
+  void initState() {
+    super.initState();
+
+    FlutterRingtonePlayer.getDefaultAlarmRingtone().then((ringtone) {
+      setState(() {
+        _defaultRingtone = ringtone;
+      });
+    });
+    FlutterRingtonePlayer.getAlarmRingtonesList().then((ringtones) {
+      setState(() {
+        _ringtones = ringtones;
+      });
+    });
+  }
+
+  void _playCustomAlarmRingtone() async {
+    final ringtonesWidgets = _ringtones
+        .map((ringtone) => SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, ringtone),
+              child: Text(
+                _defaultRingtone.uri == ringtone.uri ? '${ringtone.name} (default)' : ringtone.name,
+                style: TextStyle(
+                    color: _defaultRingtone.uri == ringtone.uri ? Colors.redAccent : Colors.black),
+              ),
+            ))
+        .toList();
+
+    final ringtone = await showDialog<AlarmRingtone>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: const Text('Choose the alarm ringtone'),
+            children: ringtonesWidgets,
+          );
+        });
+
+    FlutterRingtonePlayer.playAlarm(
+        ringtoneUri: ringtone.uri, alarmNotificationMeta: notificationMeta);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -42,25 +91,7 @@ class Home extends StatelessWidget {
             padding: EdgeInsets.all(8),
             child: RaisedButton(
               child: const Text('playAlarm with custom ringtone'),
-              onPressed: () async {
-                final ringtonesList = await FlutterRingtonePlayer.getAlarmRingtonesList();
-                final ringtonesWidgets = ringtonesList
-                    .map((ringtone) => SimpleDialogOption(
-                          onPressed: () => Navigator.pop(context, ringtone),
-                          child: Text(ringtone.name),
-                        ))
-                    .toList();
-                final ringtone = await showDialog<AlarmRingtone>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return SimpleDialog(
-                        title: const Text('Choose the alarm ringtone'),
-                        children: ringtonesWidgets,
-                      );
-                    });
-                FlutterRingtonePlayer.playAlarm(
-                    ringtoneUri: ringtone.uri, alarmNotificationMeta: notificationMeta);
-              },
+              onPressed: _playCustomAlarmRingtone,
             ),
           ),
           Padding(

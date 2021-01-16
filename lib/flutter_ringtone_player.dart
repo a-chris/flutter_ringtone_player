@@ -112,4 +112,13 @@ class FlutterRingtonePlayer {
       throw 'Cannot load alarm ringtones: ${e.message}';
     }
   }
+
+  static Future<AlarmRingtone> getDefaultAlarmRingtone() async {
+    try {
+      final dynamic ringtone = await _channel.invokeMethod('getDefaultAlarmRingtone');
+      return AlarmRingtone.fromMap(Map<String, dynamic>.from(ringtone));
+    } on PlatformException catch (e) {
+      throw 'Cannot load default alarm ringtone: ${e.message}';
+    }
+  }
 }

@@ -4,7 +4,9 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.Ringtone;
 import android.media.RingtoneManager;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -81,6 +83,10 @@ public class FlutterRingtonePlayerPlugin implements FlutterPlugin, MethodCallHan
                     }
                     result.success(ringtonesList);
                     break;
+                case "getDefaultAlarmRingtone":
+                    AlarmRingtone defaultAlarmRingtone = getDefaultAlarmRingtone();
+                    result.success(defaultAlarmRingtone.toMap());
+                    break;
             }
         } catch (Exception e) {
             result.error("Exception", e.getMessage(), null);
@@ -115,6 +121,13 @@ public class FlutterRingtonePlayerPlugin implements FlutterPlugin, MethodCallHan
         }
 
         return meta;
+    }
+
+    private AlarmRingtone getDefaultAlarmRingtone() {
+        Uri uri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_ALARM);
+        Ringtone ringtone = RingtoneManager.getRingtone(context, uri);
+        String uriString = uri.toString().substring(0, uri.toString().indexOf("?"));
+        return new AlarmRingtone(ringtone.getTitle(context), uriString);
     }
 
     private ArrayList<AlarmRingtone> getAlarmRingtonesList() {
